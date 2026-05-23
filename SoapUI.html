@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Ultimate SoapUI Groovy & API Testing Guide</title>
+    <meta name="description" content="Complete breakdown of SoapUI API testing: Groovy scripts, script assertions, advanced techniques, and comprehensive API testing strategies. Includes public calculator service examples.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            /* Light Theme Palette */
+            --bg-body: #F8FAFC;
+            --bg-surface: #FFFFFF;
+            --bg-nav: rgba(255, 255, 255, 0.85);
+            --text-main: #0F172A;
+            --text-muted: #475569;
+            --text-light: #94A3B8;
+            --border-color: #E2E8F0;
+            --primary: #6366F1;
+            --primary-hover: #4F46E5;
+            --primary-bg: #EEF2FF;
+            --success: #10B981;
+            --success-bg: #ECFDF5;
+            --warning: #F59E0B;
+            --warning-bg: #FFFBEB;
+            --danger: #EF4444;
+            --danger-bg: #FEF2F2;
+            --code-bg: #0F172A;
+            --code-text: #E2E8F0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --sidebar-w: 280px;
+            --header-h: 72px;
+            --font-sans: 'Inter', system-ui, sans-serif;
+            --font-mono: 'Fira Code', monospace;
+        }
+
+        [data-theme="dark"] {
+            /* Dark Theme Palette */
+            --bg-body: #0B0F19;
+            --bg-surface: #111827;
+            --bg-nav: rgba(17, 24, 39, 0.85);
+            --text-main: #F3F4F6;
+            --text-muted: #9CA3AF;
+            --text-light: #6B7280;
+            --border-color: #1F2937;
+            --primary: #818CF8;
+            --primary-hover: #6366F1;
+            --primary-bg: rgba(99, 102, 241, 0.15);
+            --success: #34D399;
+            --success-bg: rgba(16, 185, 129, 0.1);
+            --warning: #FBBF24;
+            --warning-bg: rgba(245, 158, 11, 0.1);
+            --danger: #F87171;
+            --danger-bg: rgba(239, 68, 68, 0.1);
+            --code-bg: #030712;
+            --code-text: #E5E7EB;
+        }
+
+        html { scroll-behavior: smooth; scroll-padding-top: calc(var(--header-h) + 24px); }
+        
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.7;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: var(--header-h);
+            background: var(--bg-nav);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 5%;
+            z-index: 1000;
+        }
+
+        .nav-brand {
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-brand span { color: var(--primary); }
+
+        .nav-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .theme-toggle {
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .hamburger {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-main);
+            font-size: 1.8rem;
+            cursor: pointer;
+        }
+
+        /* Sidebar Index */
+        .sidebar {
+            position: fixed;
+            top: var(--header-h);
+            left: 0;
+            bottom: 0;
+            width: var(--sidebar-w);
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 32px 0;
+            z-index: 900;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar::-webkit-scrollbar { width: 4px; }
+        .sidebar::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+
+        .toc-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-light);
+            padding: 0 24px;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 24px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar a:hover, .sidebar a.active {
+            color: var(--primary);
+            background: var(--primary-bg);
+            border-left-color: var(--primary);
+        }
+
+        /* Mobile Nav */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            top: var(--header-h); left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 950;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .mobile-nav.open {
+            display: block;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .mobile-nav-inner {
+            background: var(--bg-surface);
+            width: 280px;
+            height: 100%;
+            padding: 24px 0;
+            overflow-y: auto;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .mobile-nav.open .mobile-nav-inner {
+            transform: translateX(0);
+        }
+
+        .mobile-nav-inner a {
+            display: block;
+            padding: 14px 24px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-left: 3px solid transparent;
+        }
+
+        .mobile-nav-inner a:hover, .mobile-nav-inner a.active {
+            background: var(--primary-bg);
+            color: var(--primary);
+            border-left-color: var(--primary);
+        }
+
+        /* Main Content */
+        .content {
+            margin-left: var(--sidebar-w);
+            margin-top: var(--header-h);
+            padding: 40px 48px 80px;
+            max-width: 1000px;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            color: white;
+            border-radius: var(--radius-lg);
+            padding: 48px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.3);
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            letter-spacing: -0.03em;
+            margin-bottom: 16px;
+        }
+
+        .hero p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.15rem;
+            line-height: 1.6;
+            max-width: 700px;
+        }
+
+        /* Content Blocks */
+        .section-block {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 40px;
+            margin-bottom: 32px;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .section-block:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 24px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin: 32px 0 16px;
+            color: var(--text-main);
+        }
+
+        p, li {
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            font-size: 1.05rem;
+        }
+
+        ul, ol { margin-left: 24px; margin-bottom: 24px; }
+        li::marker { color: var(--primary); }
+        strong { color: var(--text-main); font-weight: 600; }
+
+        /* Code Styles */
+        code {
+            font-family: var(--font-mono);
+            font-size: 0.85em;
+            background: var(--primary-bg);
+            color: var(--primary);
+            padding: 3px 6px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .code-window {
+            background: var(--code-bg);
+            border-radius: var(--radius-md);
+            margin: 24px 0;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .code-header {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mac-dots { display: flex; gap: 6px; }
+        .mac-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot-red { background: #FF5F56; }
+        .dot-yellow { background: #FFBD2E; }
+        .dot-green { background: #27C93F; }
+
+        pre {
+            padding: 20px;
+            overflow-x: auto;
+            color: var(--code-text);
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .kw { color: #CBA6F7; } 
+        .str { color: #A6E3A1; } 
+        .fn { color: #89B4FA; } 
+        .cm { color: #6C7086; font-style: italic; } 
+
+        .copy-btn {
+            position: absolute;
+            top: 6px; right: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            font-family: var(--font-sans);
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .copy-btn:hover { background: var(--primary); }
+
+        /* Callouts */
+        .callout {
+            padding: 20px 24px;
+            border-radius: var(--radius-md);
+            margin: 24px 0;
+            display: flex;
+            gap: 16px;
+            font-size: 1rem;
+            line-height: 1.6;
+            align-items: flex-start;
+        }
+        
+        .callout-icon { font-size: 1.25rem; }
+        .callout-blue { background: var(--primary-bg); border: 1px solid var(--primary); color: var(--primary); }
+        .callout-blue p, .callout-blue strong { color: inherit; }
+        .callout-yellow { background: var(--warning-bg); border: 1px solid var(--warning); color: #B45309; }
+        [data-theme="dark"] .callout-yellow { color: var(--warning); }
+        .callout-yellow p, .callout-yellow strong { color: inherit; margin: 0; }
+        .callout-green { background: var(--success-bg); border: 1px solid var(--success); color: #047857; }
+        [data-theme="dark"] .callout-green { color: var(--success); }
+        .callout-green p, .callout-green strong { color: inherit; margin: 0; }
+
+        /* Tables */
+        .table-wrapper { overflow-x: auto; margin: 24px 0; border-radius: var(--radius-md); border: 1px solid var(--border-color); }
+        table { width: 100%; border-collapse: collapse; background: var(--bg-surface); }
+        th, td { padding: 16px 20px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { background: var(--bg-body); font-weight: 700; color: var(--text-main); }
+        tr:last-child td { border-bottom: none; }
+        
+        /* Quiz */
+        .quiz-question { background: var(--bg-body); padding: 24px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 24px; }
+        .quiz-question p { color: var(--text-main); font-weight: 600; margin-bottom: 16px; }
+        .quiz-options { display: flex; flex-direction: column; gap: 12px; }
+        .quiz-opt { background: var(--bg-surface); padding: 12px 16px; border-radius: 8px; cursor: pointer; border: 2px solid var(--border-color); font-size: 0.95rem; color: var(--text-muted); transition: all 0.2s ease; }
+        .quiz-opt:hover { border-color: var(--primary); background: var(--primary-bg); color: var(--primary); }
+        .quiz-opt.selected { border-color: var(--primary); background: var(--primary-bg); color: var(--primary); font-weight: 600; }
+        .quiz-opt.correct { border-color: var(--success); background: var(--success-bg); color: var(--success); }
+        .quiz-opt.wrong { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
+        .quiz-feedback { margin-top: 12px; font-weight: 600; font-size: 0.9rem; }
+        .quiz-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border-color); }
+        .reset-quiz { background: var(--text-main); color: var(--bg-surface); border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-family: var(--font-sans); transition: opacity 0.2s; }
+        .reset-quiz:hover { opacity: 0.9; }
+        .quiz-score { font-size: 1.25rem; font-weight: 800; color: var(--text-main); }
+
+        /* Back to top */
+        .back-top { position: fixed; bottom: 32px; right: 32px; background: var(--primary); color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: none; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4); font-size: 1.2rem; z-index: 100; }
+        .back-top.visible { opacity: 1; transform: translateY(0); }
+        .back-top:hover { background: var(--primary-hover); transform: scale(1.05); }
+
+        @media (max-width: 1024px) {
+            .sidebar { transform: translateX(-100%); }
+            .content { margin-left: 0; padding: 32px 24px; max-width: 100%; }
+            .hamburger { display: block; }
+        }
+        @media (max-width: 768px) {
+            .hero { padding: 32px 24px; }
+            .hero h1 { font-size: 2rem; }
+            .section-block { padding: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-brand">🧪 <span>SoapUI Groovy Lab</span></div>
+        <div class="nav-controls">
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle Dark Mode">🌙</button>
+            <button class="hamburger" id="hamburgerBtn" aria-label="Menu">☰</button>
+        </div>
+    </nav>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="toc-title">📚 INDEX</div>
+        <a href="#overview" class="active">📌 Guide Overview</a>
+        <a href="#groovy-script">⚙️ Groovy Script Deep Dive</a>
+        <a href="#assertion-intro">🧪 Script Assertions</a>
+        <a href="#diff-table">📊 Comparison Table</a>
+        <a href="#advanced">🚀 Advanced Groovy Tips</a>
+        <a href="#api-testing">🌐 Comprehensive API Testing</a>
+        <a href="#best-practices">🎯 Architecture Best Practices</a>
+        <a href="#quiz">📝 Knowledge Check</a>
+        <a href="#fullscript">📜 Complete Master Script</a>
+    </aside>
+
+    <div class="mobile-nav" id="mobileNav">
+        <div class="mobile-nav-inner">
+            <div class="toc-title" style="margin-top: 16px;">📚 INDEX</div>
+            <a href="#overview">📌 Guide Overview</a>
+            <a href="#groovy-script">⚙️ Groovy Script Deep Dive</a>
+            <a href="#assertion-intro">🧪 Script Assertions</a>
+            <a href="#diff-table">📊 Comparison Table</a>
+            <a href="#advanced">🚀 Advanced Groovy Tips</a>
+            <a href="#api-testing">🌐 Comprehensive API Testing</a>
+            <a href="#best-practices">🎯 Architecture Best Practices</a>
+            <a href="#quiz">📝 Knowledge Check</a>
+            <a href="#fullscript">📜 Complete Master Script</a>
+        </div>
+    </div>
+
+    <main class="content">
+        
+        <header class="hero">
+            <h1>Ultimate SoapUI Groovy & API Testing Guide</h1>
+            <p>Dynamic request modification, XML/JSON manipulation, test step execution, assertions, and comprehensive enterprise API automation strategies combined into a single master reference.</p>
+        </header>
+
+        <section class="section-block" id="overview">
+            <h2>📌 Guide Overview</h2>
+            <p>This master guide covers automating and validating web services natively inside SoapUI. You will learn:</p>
+            <ul>
+                <li><strong>Groovy Script test steps</strong> – dynamic request modification, reading/updating properties, programmatic step execution, and data-driven testing.</li>
+                <li><strong>Script Assertions</strong> – validating responses using built-in context variables (<code>messageExchange</code>, <code>log</code>, <code>context</code>).</li>
+                <li><strong>Ready‑to‑use snippets</strong> – handling XML namespaces, parsing JSON for status codes, and extracting node values.</li>
+                <li><strong>Comprehensive API Testing</strong> – mocking, CI/CD integrations, security vulnerability scans, and load testing.</li>
+                <li><strong>Architecture Best Practices</strong> – strategies to solidify your test automation framework and keep scripts maintainable.</li>
+            </ul>
+            <div class="callout callout-green">
+                <div class="callout-icon">🧪</div>
+                <p><strong>Live Practice WSDL:</strong> All Add operation examples in this guide are fully compatible with the public free Calculator SOAP service: <code>http://www.dneonline.com/calculator.asmx?wsdl</code>. Import this WSDL into SoapUI to follow along with intA, intB inputs and AddResult validation.</p>
+            </div>
+        </section>
+
+        <section class="section-block" id="groovy-script">
+            <h2>⚙️ Groovy Script Test Step: Deep Dive</h2>
+            <p>A Groovy Script runs as a standalone test step in the execution sequence. It has full access to the <code>testRunner</code> object, allowing it to manipulate other steps, adjust endpoints, and dictate the test execution flow. Below is a breakdown of an automated calculation flow using the <strong>public Calculator WSDL</strong> (Add operation).</p>
+            
+            <div class="callout callout-blue">
+                <div class="callout-icon">🔗</div>
+                <p><strong>Real-world endpoint:</strong> The code snippets reference the “Add” operation from <code>http://www.dneonline.com/calculator.asmx?wsdl</code> — the SOAP request expects <code>intA</code> and <code>intB</code> and returns <code>AddResult</code>.</p>
+            </div>
+
+            <h3>📦 1. Imports & Setup</h3>
+            <div class="code-window">
+                <div class="code-header"><div class="mac-dots"><div class="mac-dot dot-red"></div><div class="mac-dot dot-yellow"></div><div class="mac-dot dot-green"></div></div></div>
+                <button class="copy-btn">Copy</button>
+                <pre><code><span class="kw">import</span> com.eviware.soapui.support.XmlHolder
+<span class="kw">import</span> com.eviware.soapui.impl.wsdl.testcase.WsdlTestRunContext</code></pre>
+            </div>
+            <ul>
+                <li><code>XmlHolder</code> enables XPath‑based reading and dynamic modification of XML documents. Essential for manipulating SOAP request/response envelopes.</li>
+                <li><code>WsdlTestRunContext</code> provides the necessary runtime environment to trigger a test step programmatically via <code>testStep.run()</code>.</li>
+            </ul>
+
+            <h3>🏷️ 2. Working with TestSuite Properties</h3>
+            <div class="code-window">
+                <div class="code-header"><div class="mac-dots"><div class="mac-dot dot-red"></div><div class="mac-dot dot-yellow"></div><div class="mac-dot dot-green"></div></div></div>
+                <button class="copy-btn">Copy</button>
+                <pre><code><span class="fn">log.info</span> context.expand(<span class="str">'${#TestSuite#Temp}'</span>)
+<span class="fn">log.info</span> testRunner.testCase.testSuite.project.testSuites[<span class="str">"TestSuite"</span>].getPropertyValue(<span class="str">"Temp"</span>)
+testRunner.testCase.testSuite.project.testSuites[<span class="str">"TestSuite"</span>].setPropertyValue(<span class="str">"Temp"</span>,<span class="str">"50"</span>)</code></pre>
+            </div>
+            <ul>
+                <li><code>context.expand()</code> seamlessly resolves property expansions at runtime, making it highly flexible.</li>
+                <li><code>setPropertyValue</code> updates properties on-the-fly, persisting the values throughout the remainder of the test execution cycle.</li>
+            </ul>
+
+            <h3>📄 3. Reading & Modifying the Request XML (Calculator Add Example)</h3>
+            <div class="code-window">
+                <div class="code-header"><div class="mac-dots"><div class="mac-dot dot-red"></div><div class="mac-dot dot-yellow"></div><div class="mac-dot dot-green"></div></div></div>
+                <button class="copy-btn">Copy</button>
+                <pre><code><span class="kw">def</span> addReq = testRunner.testCase.testSuite.testCases[<span class="str">"Add TestCase"</span>].testSteps[<span class="str">"Add"</span>].getPropertyValue(<span class="str">"RawRequest"</span>)
+<span class="kw">def</span> xmlAdd = <span class="kw">new</span> XmlHolder(addReq)
+xmlAdd.setNodeValue(<span class="str">"//*:intA"</span>,<span class="str">"15"</span>)
+xmlAdd.setNodeValue(<span class="str">"//*:intB"</span>,<span class="str">"15"</span>)
+<span class="kw">def</span> newxml = xmlAdd.getXml()
+testRunner.testCase.testSuite.testCases[<span class="str">"Add TestCase"</span>].testSteps[<span class="str">"Add"</span>].setPropertyValue(<span class="str">"Request"</span>, newxml)</code></pre>
+            </div>
+            <ul>
+                <li><code>RawRequest</code> securely holds the template of the last sent request.</li>
+                <li>The wildcard <code>//*:intA</code> bypasses strict namespace bindings — perfect for the calculator’s XML structure.</li>
+                <li>Overwriting the step’s <code>Request</code> property dynamically alters the payload that will be fired when the step is invoked.</li>
+            </ul>
+
+            <h3>⚙️ 4. Programmatic Execution & Assertion (AddResult validation)</h3>
+            <div class="code-window">
+                <div class="code-header"><div class="mac-dots"><div class="mac-dot dot-red"></div><div class="mac-dot dot-yellow"></div><div class="mac-dot dot-green"></div></div></div>
+                <button class="copy-btn">Copy</button>
+                <pre><code><span class="cm">// Run the Add step from the public calculator service</span>
+<span class="kw">def</span> addteststep = testRunner.testCase.testSuite.testCases[<span class="str">"Add TestCase"</span>].testSteps[<span class="str">"Add"</span>]
+<span class="kw">def</span> contextadd = <span class="kw">new</span> WsdlTestRunContext(addteststep)
+addteststep.run(testRunner, contextadd)
+
+<span class="cm">// Extract AddResult from response and assert</span>
+<span class="kw">def</span> addResponse = addteststep.getPropertyValue(<span class="str">"Response"</span>)
+<span class="kw">def</span> xmlAddresonse = <span class="kw">new</span> XmlHolder(addResponse)
+<span class="kw">def</span> sum = xmlAddresonse.getNodeValue(<span class="str">"//*:AddResult"</span>)
+<span class="kw">assert</span> sum == <span class="str">"30"</span>   <span class="cm">// 15+15 = 30</span></code></pre>
+            </div>
+        </section>
+
+        <section class="section-block" id="assertion-intro">
+            <h2>🧪 Script Assertions</h2>
+            <p>A <strong>Script Assertion</strong> attaches directly to an HTTP request test step (SOAP, REST, JDBC). It fires immediately <em>after</em> the response is received. It relies on three built‑in variables:</p>
+            <ul>
+                <li><code>log</code> – Logger interface targeting the internal test execution log.</li>
+                <li><code>context</code> – Provides the TestCaseRunContext to read/write properties.</li>
+                <li><code>messageExchange</code> – Grants direct access to raw request/response objects, HTTP headers, latencies, and file attachments.</li>
+            </ul>
+            
+            <div class="callout callout-yellow">
+                <div class="callout-icon">⚠️</div>
+                <p><strong>Note:</strong> The <code>testRunner</code> object is <strong>not available</strong> inside Script Assertions. You must rely on <code>context.getTestCase()</code> to interact with the parent suite hierarchy.</p>
+            </div>
+
+            <h3>➕ Calculator Service Assertion (Add operation)</h3>
+            <div class="code-window">
+                <div class="code-header"><div class="mac-dots"><div class="mac-dot dot-red"></div><div class="mac-dot dot-yellow"></div><div class="mac-dot dot-green"></div></div></div>
+                <button class="copy-btn">Copy</button>
+                <pre><code><span class="kw">import</span> com.eviware.soapui.support.XmlHolder
+
+<span class="cm">// Validate AddResult from public calculator SOAP response</span>
+<span class="kw">def</span> holder = <span class="kw">new</span> XmlHolder(messageExchange.responseContentAsXml)
+<span class="kw">def</span> addResult = holder.getNodeValue(<span class="str">"//*:AddResult"</span>)
+
+<span class="kw">def</span> expectedSum = <span class="str">"30"</span>   <span class="cm">// based on sent intA=15, intB=15</span>
+<span class="kw">assert</span> addResult == expectedSum : <span class="str">"Addition mismatch: expected ${expectedSum}, got ${addResult}"</span>
+log.info <span class="str">"✅ AddResult validation passed: "</span> + addResult</code></pre>
+            </div>
+
+            <h3>📄 XML Payload Validation (With Namespaces)</h3>
+            <div class="code-window">
+                <div class="code-header"><div class="mac-dots"><div class="mac-dot dot-red"></div><div class="mac-dot dot-yellow"></div><div class="mac-dot dot-green"></div></div></div>
+                <button class="copy-btn">Copy</button>
+                <pre><code><span class="kw">import</span> com.eviware.soapui.support.XmlHolder
+
+<span class="kw">def</span> holder = <span class="kw">new</span> XmlHolder(messageExchange.responseContentAsXml)
+holder.declareNamespace(<span class="str">"ns1"</span>, <span class="str">"https://maps.googleapis.com/maps/api/place/textsearch"</span>)
+
+<span class="kw">def</span> actual = holder.getNodeValue(<span class="str">"/ns1:Response[1]/ns1:results[1]/ns1:e[1]/ns1:reference[1]"</span>)
+<span class="kw">def</span> expected = context.getTestCase().getPropertyValue(<span class="str">"ID"</span>)
+
+<span class="kw">assert</span> actual == expected</code></pre>
+            </div>
+
+            <h3>📦 JSON Status Validation & Data Extraction</h3>
+            <div class="code-window">
+                <div class="code-header"><div class="mac-dots"><div class="mac-dot dot-red"></div><div class="mac-dot dot-yellow"></div><div class="mac-dot dot-green"></div></div></div>
+                <button class="copy-btn">Copy</button>
+                <pre><code><span class="kw">import</span> groovy.json.JsonSlurper
+
+<span class="kw">def</span> response = messageExchange.response.responseContent
+<span class="kw">def</span> jsonParser = <span class="kw">new</span> JsonSlurper().parseText(response)
+
+<span class="kw">assert</span> jsonParser.status == <span class="str">"OK"</span>
+<span class="kw">assert</span> jsonParser.name == <span class="str">"Backline house"</span>
+
+<span class="cm">// Storing extracted data for downstream steps</span>
+context.getTestCase().setPropertyValue(<span class="str">"place_id"</span>, jsonParser.place_id.toString())</code></pre>
+            </div>
+        </section>
+
+        <section class="section-block" id="diff-table">
+            <h2>📊 Method Comparison Table</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Architectural Feature</th>
+                            <th>Groovy Script Test Step</th>
+                            <th>Script Assertion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Placement</strong></td>
+                            <td>Standalone test step in execution flow</td>
+                            <td>Attached directly inside a request step</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Execution Timing</strong></td>
+                            <td>When its sequence position is reached</td>
+                            <td>Immediately after parent receives response</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Available Variables</strong></td>
+                            <td><code>log</code>, <code>context</code>, <code>testRunner</code>, <code>testCase</code></td>
+                            <td><code>log</code>, <code>context</code>, <code>messageExchange</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Modify Future Requests?</strong></td>
+                            <td>Yes – via <code>RawRequest</code> edits</td>
+                            <td>No – request has already fired</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Trigger Other Steps?</strong></td>
+                            <td>Yes – via <code>runTestStepByName</code></td>
+                            <td>No – isolated to current validation</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Primary Use Case</strong></td>
+                            <td>Setup, looping, dynamic data generation</td>
+                            <td>Complex payload validation, cross‑field logic</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="section-block" id="advanced">
+            <h2>🚀 Advanced Groovy Capabilities</h2>
+            
+            <h3>🔁 Looping & Data-Driven Execution (Calculator batch addition)</h3>
+            <div class="code-window">
+                <div class="code-header"><div class="mac-dots"><div class="mac-dot dot-red"></div><div class="mac-dot dot-yellow"></div><div class="mac-dot dot-green"></div></div></div>
+                <button class="copy-btn">Copy</button>
+                <pre><code><span class="cm">// Iterate through test data sets for Add operation</span>
+[<span class="str">"1,2"</span>, <span class="str">"5,7"</span>, <span class="str">"10,20"</span>].each { pair ->
+    <span class="kw">def</span> (a,b) = pair.split(<span class="str">','</span>)
+    xmlAdd.setNodeValue(<span class="str">"//*:intA"</span>, a)
+    xmlAdd.setNodeValue(<span class="str">"//*:intB"</span>, b)
+    <span class="cm">// run execution and assert logic here</span>
+}</code></pre>
+            </div>
+
+            <h3>🛢️ Database Access (JDBC integration)</h3>
+            <div class="code-window">
+                <div class="code-header"><div class="mac-dots"><div class="mac-dot dot-red"></div><div class="mac-dot dot-yellow"></div><div class="mac-dot dot-green"></div></div></div>
+                <button class="copy-btn">Copy</button>
+                <pre><code><span class="kw">import</span> groovy.sql.Sql
+
+<span class="kw">def</span> sql = Sql.newInstance(<span class="str">"jdbc:mysql://localhost/db"</span>, <span class="str">"user"</span>, <span class="str">"pass"</span>, <span class="str">"com.mysql.jdbc.Driver"</span>)
+<span class="kw">def</span> rows = sql.rows(<span class="str">"SELECT * FROM users WHERE active = 1"</span>)
+sql.close()</code></pre>
+            </div>
+            
+            <div class="callout callout-blue">
+                <div class="callout-icon">💡</div>
+                <p><strong>Pro Tip:</strong> To utilize JDBC inside Groovy, you must manually download the respective database driver `.jar` file (e.g., mysql-connector) and place it inside your <code>SoapUI/bin/ext</code> installation directory.</p>
+            </div>
+        </section>
+
+        <section class="section-block" id="api-testing">
+            <h2>🌐 Comprehensive API Testing Strategies</h2>
+            <p>To scale your automation efforts into a robust, enterprise-grade architecture, utilize SoapUI's broader capabilities outside of purely functional scripts. The <strong>public calculator WSDL</strong> (<code>http://www.dneonline.com/calculator.asmx?wsdl</code>) is perfect for practicing these techniques:</p>
+            
+            <ul>
+                <li><strong>Data-Driven Testing (DDT):</strong> Avoid hardcoded values. Utilize Groovy coupled with Apache POI to read bulk Excel sheets or CSVs, iterating rows to blanket the API with boundary and negative test cases.</li>
+                <li><strong>Service Virtualization (Mocking):</strong> Don't wait for backend completion. Spin up local Mock Services in SoapUI. Configure dispatch styles (Sequence, Random, or Groovy Scripted) to emulate complex downstream JSON/XML responses based on incoming request headers.</li>
+                <li><strong>Security Vulnerability Scanning:</strong> Attach automated Security Tests over your functional endpoints to continuously scan for SQL Injections, Cross-Site Scripting (XSS), and XML Bomb/Fuzzing attacks.</li>
+                <li><strong>Performance & Load Simulation:</strong> Instantly right-click a functional test to generate a Load Test. Apply strategies like Burst, Variance, or Simple threads to measure Transactions Per Second (TPS) and latency degradation.</li>
+                <li><strong>CI/CD & CLI Automation:</strong> Integrate your XML project files into Jenkins or GitLab pipelines using the native CLI runner. Output JUnit format reports to fail builds automatically if regression assertions drop.
+                    <div class="code-window" style="margin-top: 12px;">
+                        <div class="code-header"><div class="mac-dots"><div class="mac-dot dot-red"></div><div class="mac-dot dot-yellow"></div><div class="mac-dot dot-green"></div></div></div>
+                        <pre><code>testrunner.bat -s"TestSuite 1" -r -a -j -f"C:\Reports" "C:\Project.xml"</code></pre>
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <section class="section-block" id="best-practices">
+            <h2>🎯 Architecture Best Practices</h2>
+            <ul>
+                <li><strong>Validate Network Responses First:</strong> Always verify that <code>messageExchange.response.responseContent</code> is not null before instantiating JSON/XML parsers to avoid NullPointer exceptions on server timeouts.</li>
+                <li><strong>Strict Namespaces:</strong> Relying purely on wildcards (<code>//*:node</code>) is fragile for deeply nested XML. Always use <code>declareNamespace()</code> for robust, deterministic XPath targeting.</li>
+                <li><strong>Single Responsibility Assertions:</strong> Keep script assertions focused. One logical check per assertion block yields hyper-specific logs when a failure occurs.</li>
+                <li><strong>Graceful Exception Handling:</strong> Wrap complex serialization logic inside <code>try/catch</code> blocks, triggering <code>context.getTestCase().fail("Message")</code> to fail the test gracefully without crashing the suite executor.</li>
+                <li><strong>Environment Management:</strong> Define endpoints using Project-level Custom Properties (e.g., <code>${#Project#BaseUrl}</code>). This permits instant toggling between Dev, QA, and UAT servers without altering a single script.</li>
+            </ul>
+        </section>
+
+        <section class="section-block" id="quiz">
+            <h2>📝 Knowledge Check</h2>
+            
+            <div class="quiz-question" data-correct="1">
+                <p>1. Which object is explicitly available inside a Script Assertion but completely absent in a Groovy Script test step?</p>
+                <div class="quiz-options">
+                    <div class="quiz-opt">log</div>
+                    <div class="quiz-opt">messageExchange</div>
+                    <div class="quiz-opt">testRunner</div>
+                    <div class="quiz-opt">context</div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+            
+            <div class="quiz-question" data-correct="2">
+                <p>2. What is the correct syntax to retrieve the raw XML response payload inside a Script Assertion?</p>
+                <div class="quiz-options">
+                    <div class="quiz-opt">testRunner.testCase.getPropertyValue("Response")</div>
+                    <div class="quiz-opt">context.response</div>
+                    <div class="quiz-opt">messageExchange.responseContentAsXml</div>
+                    <div class="quiz-opt">log.info response</div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+            
+            <div class="quiz-question" data-correct="0">
+                <p>3. What is a unique capability of a Groovy Script test step compared to a Script Assertion?</p>
+                <div class="quiz-options">
+                    <div class="quiz-opt">Modifying the request payload of another step before it executes</div>
+                    <div class="quiz-opt">Extracting a string value from an HTTP response</div>
+                    <div class="quiz-opt">Storing an extracted value into a test case property</div>
+                    <div class="quiz-opt">Failing the test if a JSON node does not match an expected string</div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+            
+            <div class="quiz-question" data-correct="3">
+                <p>4. Which command-line executable is provided by SoapUI to run project files headlessly in a CI/CD pipeline?</p>
+                <div class="quiz-options">
+                    <div class="quiz-opt">soapui-cli.sh</div>
+                    <div class="quiz-opt">run-test.bat</div>
+                    <div class="quiz-opt">execute-project.sh</div>
+                    <div class="quiz-opt">testrunner.bat / testrunner.sh</div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-controls">
+                <button class="reset-quiz" id="resetQuiz">Reset Quiz</button>
+                <div class="quiz-score" id="quizScore">Score: 0/4</div>
+            </div>
+        </section>
+
+        <section class="section-block" id="fullscript">
+            <h2>📜 Complete Master Script</h2>
+            <p>Below is the fully assembled Groovy Script ready for copy-pasting. This script is designed for the <strong>public Calculator SOAP service</strong> available at <code>http://www.dneonline.com/calculator.asmx?wsdl</code> (Add operation). Ensure you have imported this WSDL into SoapUI and have an existing test case named <code>Add TestCase</code> containing a SOAP step named <code>Add</code>.</p>
+            
+            <div class="code-window">
+                <div class="code-header"><div class="mac-dots"><div class="mac-dot dot-red"></div><div class="mac-dot dot-yellow"></div><div class="mac-dot dot-green"></div></div></div>
+                <button class="copy-btn">Copy</button>
+                <pre><code><span class="kw">import</span> com.eviware.soapui.support.XmlHolder
+<span class="kw">import</span> com.eviware.soapui.impl.wsdl.testcase.WsdlTestRunContext
+
+<span class="fn">log.info</span> <span class="str">'--- Groovy Script Execution Started (Calculator Service) ---'</span>
+
+<span class="cm">// 1. Property Management</span>
+<span class="kw">def</span> project = testRunner.testCase.testSuite.project
+project.testSuites[<span class="str">"TestSuite"</span>].setPropertyValue(<span class="str">"Temp"</span>, <span class="str">"50"</span>)
+<span class="fn">log.info</span> <span class="str">"Set Property Value: "</span> + context.expand(<span class="str">'${#TestSuite#Temp}'</span>)
+
+<span class="cm">// 2. Dynamic Request Modification (intA & intB for Add operation)</span>
+<span class="kw">def</span> targetStep = testRunner.testCase.testSuite.testCases[<span class="str">"Add TestCase"</span>].testSteps[<span class="str">"Add"</span>]
+<span class="kw">def</span> rawReq = targetStep.getPropertyValue(<span class="str">"RawRequest"</span>)
+
+<span class="kw">if</span>(rawReq) {
+    <span class="kw">def</span> xmlAdd = <span class="kw">new</span> XmlHolder(rawReq) 
+    xmlAdd.setNodeValue(<span class="str">"//*:intA"</span>, <span class="str">"15"</span>)
+    xmlAdd.setNodeValue(<span class="str">"//*:intB"</span>, <span class="str">"15"</span>)
+    targetStep.setPropertyValue(<span class="str">"Request"</span>, xmlAdd.getXml())
+} <span class="kw">else</span> {
+    <span class="fn">log.error</span> <span class="str">"RawRequest was empty!"</span>
+}
+
+<span class="cm">// 3. Programmatic Execution</span>
+<span class="kw">def</span> runContext = <span class="kw">new</span> WsdlTestRunContext(targetStep)
+<span class="kw">def</span> result = targetStep.run(testRunner, runContext)
+<span class="fn">log.info</span> <span class="str">"Step execution status: "</span> + result.status
+
+<span class="cm">// 4. Result Extraction & Assertion (AddResult validation)</span>
+<span class="kw">def</span> responseXml = targetStep.getPropertyValue(<span class="str">"Response"</span>)
+<span class="kw">if</span>(responseXml) {
+    <span class="kw">def</span> xmlParser = <span class="kw">new</span> XmlHolder(responseXml) 
+    <span class="kw">def</span> sum = xmlParser.getNodeValue(<span class="str">"//*:AddResult"</span>)
+    
+    <span class="fn">log.info</span> <span class="str">"Calculated Sum: "</span> + sum
+    <span class="kw">assert</span> sum == <span class="str">"30"</span> : <span class="str">"Math validation failed! Expected 30, got ${sum}"</span>
+} <span class="kw">else</span> {
+    testRunner.fail(<span class="str">"No response payload received from calculator service."</span>)
+}</code></pre>
+            </div>
+        </section>
+
+    </main>
+
+    <button class="back-top" id="backTop" aria-label="Scroll to top">↑</button>
+
+    <script>
+        // Theme Management
+        const root = document.documentElement;
+        const themeBtn = document.getElementById('themeToggle');
+        
+        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            root.setAttribute('data-theme', 'dark');
+            themeBtn.textContent = '☀️';
+        }
+
+        themeBtn.addEventListener('click', () => {
+            if (root.getAttribute('data-theme') === 'dark') {
+                root.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+                themeBtn.textContent = '🌙';
+            } else {
+                root.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                themeBtn.textContent = '☀️';
+            }
+        });
+
+        // Mobile Nav / Hamburger
+        const mobileNav = document.getElementById('mobileNav');
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const sidebarLinks = document.querySelectorAll('.sidebar a, .mobile-nav-inner a');
+
+        function toggleMenu() {
+            mobileNav.classList.toggle('open');
+        }
+
+        hamburgerBtn.addEventListener('click', toggleMenu);
+        mobileNav.addEventListener('click', (e) => {
+            if(e.target === mobileNav) toggleMenu();
+        });
+
+        // Scroll Spy Highlight
+        const sections = document.querySelectorAll('.section-block');
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                if (window.scrollY >= section.offsetTop - 150) {
+                    current = section.id;
+                }
+            });
+            sidebarLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${current}`) {
+                    link.classList.add('active');
+                }
+            });
+        }, { passive: true });
+
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                if (mobileNav.classList.contains('open')) toggleMenu();
+            });
+        });
+
+        // Copy Code Functionality
+        document.querySelectorAll('.copy-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const codeBlock = btn.nextElementSibling.innerText;
+                try {
+                    await navigator.clipboard.writeText(codeBlock);
+                    const originalText = btn.textContent;
+                    btn.textContent = 'Copied!';
+                    btn.style.background = 'var(--success)';
+                    setTimeout(() => { 
+                        btn.textContent = originalText; 
+                        btn.style.background = '';
+                    }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy text', err);
+                }
+            });
+        });
+
+        // Quiz Logic Engine
+        const questions = document.querySelectorAll('.quiz-question');
+        let answers = new Array(questions.length).fill(null);
+        const scoreDisplay = document.getElementById('quizScore');
+        
+        function updateScore() {
+            let correct = 0;
+            questions.forEach((q, i) => { 
+                if (answers[i] !== null && answers[i] == q.dataset.correct) correct++; 
+            });
+            scoreDisplay.textContent = `Score: ${correct}/${questions.length}`;
+        }
+
+        questions.forEach((q, idx) => {
+            const opts = q.querySelectorAll('.quiz-opt');
+            opts.forEach((opt, optIdx) => {
+                opt.addEventListener('click', () => {
+                    opts.forEach(o => o.classList.remove('selected', 'correct', 'wrong'));
+                    opt.classList.add('selected');
+                    
+                    const isCorrect = optIdx == q.dataset.correct;
+                    answers[idx] = optIdx;
+                    const feedback = q.querySelector('.quiz-feedback');
+                    
+                    if (isCorrect) {
+                        opt.classList.add('correct');
+                        feedback.innerHTML = '<span style="color: var(--success);">✓ Correct!</span>';
+                    } else {
+                        opt.classList.add('wrong');
+                        const correctIdx = parseInt(q.dataset.correct);
+                        const correctText = opts[correctIdx].innerText;
+                        feedback.innerHTML = `<span style="color: var(--danger);">✗ Incorrect. The answer is: ${correctText}</span>`;
+                    }
+                    updateScore();
+                });
+            });
+        });
+
+        document.getElementById('resetQuiz').addEventListener('click', () => {
+            answers.fill(null);
+            questions.forEach(q => {
+                q.querySelectorAll('.quiz-opt').forEach(opt => opt.classList.remove('selected', 'correct', 'wrong'));
+                q.querySelector('.quiz-feedback').innerHTML = '';
+            });
+            updateScore();
+        });
+
+        // Back to Top Button
+        const backTop = document.getElementById('backTop');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 400) {
+                backTop.classList.add('visible');
+            } else {
+                backTop.classList.remove('visible');
+            }
+        }, { passive: true });
+
+        backTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    </script>
+</body>
+</html>
